@@ -4,7 +4,7 @@ use utf8;
 
 require Tk;
 use Tk;
-use Tk::HList;
+use Tk::Table;
 
 my $mw = MainWindow->new();
 $mw->title("User Manager");
@@ -21,15 +21,52 @@ $menuUser->AddItems(	["command" => "Dodaj",
 
 my $frame = $mw->Frame(-background=>'green')->pack(-side =>'top',-fill=>'x');
 
-$frame->Button( -text => 'Punkt',-width => 20,
-            -command => \&punkt)->pack();
-
 sub new_user {
 $mw->messageBox(-message =>  'dodawanie',-type=>'info');
 }
 
 sub show_users {
-$mw->messageBox(-message => 'przeglad',-type=>'info');
+my $filename = '/etc/passwd';
+my @passwd;
+my $size=0;
+open(FILE, $filename) or die "Could not read from $filename, program halting.";
+while(<FILE>)
+{
+  chomp;
+  my @tmp = split(':', $_);
+	$passwd[$size][0]=$tmp[0];
+	$passwd[$size][1]=$tmp[2];
+	$size++;
 }
+close FILE;
+my $table = $frame->Table(-columns => 2,
+                                -rows => $size,
+                                -fixedrows => 1,
+                                -scrollbars => 'oe',
+                                -relief => 'raised');
+my @columnnames=('Nazwa','UID');
+foreach my $col (0 .. @columnnames)
+{
+  my $tmp_label = $table->Label(-text =>$columnnames[$col] , -width => 8, -relief =>'raised');
+  $table->put(0, $col+1, $tmp_label);
+}
+
+for(my $i=1;$i<=$size;$i++)
+{
+	my $tmp_label = $table->Label(-text => $passwd[$i][0],
+                                  -padx => 2,
+                                  -anchor => 'w',
+                                  -background => 'white',
+                                  -relief => "groove");
+    	$table->put($i, 1, $tmp_label);
+	$tmp_label = $table->Label(-text => $passwd[$i][1],
+					-padx => 2,
+					-anchor => 'w',
+					-background => 'white',
+					-relief => "groove");
+	$table->put($i,2,$tmp_label);
+}
+$table->pack();
+}#end of sub show_users
 MainLoop();
 
