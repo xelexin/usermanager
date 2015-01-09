@@ -24,14 +24,28 @@ $menuUser->AddItems(	["command" => "Dodaj",
 my $frame = $mw->Frame()->pack(-side =>'top',-fill=>'x');
 
 sub new_user {
+
+my $textPassword;
+my $textLogin;
+
+
+my $generatedPassword = generatePassword(10);
+
 $frame->destroy();
 $frame = $mw->Frame()->pack(-side =>'top',-fill=>'x');
-my $labelInputLogin = $frame->Label(-text => "Login")->grid(-column=>0,-row=>0);
-my $inputLogin = $frame->Entry(-width => 20,-background=>'white')->grid(-column=>1,-row=>0);
-my $labelInputPassword = $frame->Label(-text => "Hasło")->grid(-column=>0,-row=>1);
-my $inputPassword = $frame->Entry(-width=>20,-background=>'white',-show=>'*')->grid(-column=>1,-row=>1);
-
-
+my $i=0; #row index
+my $labelInputLogin = $frame->Label(-text => "Login")->grid(-column=>0,-row=>$i);
+my $inputLogin = $frame->Entry(-width => 20,-background=>'white',-textvariable=>\$textLogin)->grid(-column=>1,-row=>$i);
+$i++;
+my $labelInputPassword = $frame->Label(-text => "Hasło")->grid(-column=>0,-row=>$i);
+my $inputPassword = $frame->Entry(-width=>20,-background=>'white',-show=>"*",-textvariable=> \$textPassword)->grid(-column=>1,-row=>$i);
+$i++;
+my $labelGeneratedPasswordLabel = $frame->Label(-text => "Wygenerowane losowe hasło")->grid(-column=>0,-row=>$i);
+my $labelGeneratedPassword = $frame->Label(-textvariable=>\$generatedPassword)->grid(-column=>1,-row=>$i);
+$i++;
+my $buttonGeneratePassword = $frame->Button(-text=>"Użyj hasła",-command=>sub{ $textPassword=$generatedPassword; })->grid(-column=>0,-row=>$i,-columnspan=>2);
+$i++;
+my $buttonAddUser = $frame->Button(-text=>"Dodaj użytkownika",-command=>sub{executeAddUser($textLogin,$textPassword)})->grid(-column=>0,-row=>$i,-columnspan=>2);
 }#end of sub new_user
 
 
@@ -50,8 +64,8 @@ while(<FILE>)
 	$size++;
 }
 close FILE;
-my @columnnames=('Nazwa','UID','Edytuj');
-my $table = $frame->Table(-columns => 3,
+my @columnnames=('Nazwa','UID','Edytuj','Usuń');
+my $table = $frame->Table(-columns => 4,
                                 -rows => $size,
                                 -fixedrows => 1,
                                 -scrollbars => 'oe',
@@ -83,6 +97,11 @@ for(my $i=1;$i<$size;$i++)
 						-command => sub{edit($tempi)}
             );
 	$table->put($i,3,$button_edit);
+	my $button_del = $table->Button(-text => "Usuń",
+						-width => 8,
+						-command => sub{executeDeleteUser($passwd[$tempi][0]);}
+						);
+	$table->put($i,4,$button_del);
 }
 $table->pack();
 }#end of sub show_users
@@ -94,5 +113,35 @@ $frame = $mw->Frame()->pack(-side =>'top',-fill=>'x');
 
 #print "$passwd[$id][0]\n";
 }#end of sub edit
+
+sub executeAddUser 
+{
+	my($user,$pass) = @_;
+	my $command = "useradd -p $pass $user";
+	print $command."\n";
+	system($command);
+
+}#end of sub executeAddUser
+
+sub executeDeleteUser
+{
+	my($user) = @_;
+	system("userdel -fr $user");
+	show_users();
+}
+
+sub generatePassword 
+{ 
+	my $length = $_[0]; 
+	my $pwd;
+	my @my_char_list = (('A'..'Z'), ('a'..'z'), ('!','@','%','^'), (0..9));
+	my $range_dis = $#my_char_list + 1;
+	for (1..$length)
+	{
+  	$pwd .= $my_char_list[int(rand($range_dis))];
+	}
+	return $pwd
+}
+
 MainLoop();
 
