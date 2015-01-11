@@ -5,6 +5,7 @@ use utf8;
 require Tk;
 use Tk;
 use Tk::Table;
+use Tk::JBrowseEntry;
 
 my @passwd;
 
@@ -27,7 +28,7 @@ sub new_user {
 
 my $textPassword;
 my $textLogin;
-
+my $textUID;
 
 my $generatedPassword = generatePassword(10);
 
@@ -45,7 +46,14 @@ my $labelGeneratedPassword = $frame->Label(-textvariable=>\$generatedPassword)->
 $i++;
 my $buttonGeneratePassword = $frame->Button(-text=>"Użyj hasła",-command=>sub{ $textPassword=$generatedPassword; })->grid(-column=>0,-row=>$i,-columnspan=>2);
 $i++;
-my $buttonAddUser = $frame->Button(-text=>"Dodaj użytkownika",-command=>sub{executeAddUser($textLogin,$textPassword)})->grid(-column=>0,-row=>$i,-columnspan=>2);
+my @comboboxValue = getUIDs();
+my $comboboxUID = $frame->JBrowseEntry(
+																				-label=>"UID",
+																				-variable => \$textUID,
+																				-state => 'normal',
+																				-choices=>\@comboboxValue )->grid(-column=>0,-row=>$i,-columnspan=>2); 
+$i++;
+my $buttonAddUser = $frame->Button(-text=>"Dodaj użytkownika",-command=>sub{executeAddUser($textLogin,$textPassword,$textUID)})->grid(-column=>0,-row=>$i,-columnspan=>2);
 }#end of sub new_user
 
 
@@ -64,6 +72,8 @@ while(<FILE>)
 	$size++;
 }
 close FILE;
+#@passwd = split(':', `sort -n -t ':' -k3 /etc/passwd`);
+#my $size = @passwd;
 my @columnnames=('Nazwa','UID','Edytuj','Usuń');
 my $table = $frame->Table(-columns => 4,
                                 -rows => $size,
@@ -116,11 +126,11 @@ $frame = $mw->Frame()->pack(-side =>'top',-fill=>'x');
 
 sub executeAddUser 
 {
-	my($user,$pass) = @_;
-	my $command = "useradd -p $pass $user";
+	my($user,$pass,$uid) = @_;
+	my $command = "useradd -p $pass -u $uid $user";
 	print $command."\n";
 	system($command);
-
+	show_users();
 }#end of sub executeAddUser
 
 sub executeDeleteUser
@@ -128,6 +138,29 @@ sub executeDeleteUser
 	my($user) = @_;
 	system("userdel -fr $user");
 	show_users();
+}
+
+sub getUIDs
+{
+	my @busyUID = `cat /etc/passwd | cut -d ":" -f3 | sort -n`;
+	my @output;
+	for(my $i=500;$i<601;$i++)
+	{
+		my $test=0;
+		for(my $j=0;$j<@busyUID;$j++)
+		{
+			if($i==$busyUID[$j])
+			{
+				$test=1;
+				last;
+			}
+		}
+		if($test==0)
+		{
+				push(@output, $i);
+		}
+	}
+	return @output;
 }
 
 sub generatePassword 
