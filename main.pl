@@ -118,9 +118,10 @@ $frame = $mw->Frame()->pack(-side =>'top',-fill=>'x');
 sub executeAddUser 
 {
 	my($user,$pass,$uid) = @_;
-	my $command = "useradd -p $pass -u $uid $user";
-	print $command."\n";
+	my $command = "useradd -u $uid $user";
+	#print $command."\n";
 	system($command);
+	system("echo $pass | passwd --stdin $user");
 	show_users();
 }#end of sub executeAddUser
 
