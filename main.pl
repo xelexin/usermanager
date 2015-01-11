@@ -7,7 +7,8 @@ use Tk;
 use Tk::Table;
 use Tk::JBrowseEntry;
 
-my @passwd;
+my @usernames;
+my @uids;
 
 my $mw = MainWindow->new();
 $mw->title("User Manager");
@@ -60,20 +61,10 @@ my $buttonAddUser = $frame->Button(-text=>"Dodaj użytkownika",-command=>sub{exe
 sub show_users {
 $frame->destroy();
 $frame = $mw->Frame()->pack(-side =>'top',-fill=>'x');
-my $filename = '/etc/passwd';
-my $size=0;
-open(FILE, $filename) or die "Could not read from $filename, program halting.";
-while(<FILE>)
-{
-  chomp;
-  my @tmp = split(':', $_);
-	$passwd[$size][0]=$tmp[0];
-	$passwd[$size][1]=$tmp[2];
-	$size++;
-}
-close FILE;
-#@passwd = split(':', `sort -n -t ':' -k3 /etc/passwd`);
-#my $size = @passwd;
+
+@usernames = `sort -n -t ':' -k3 /etc/passwd | cut -d ':' -f1`;
+@uids = `sort -n -t ':' -k3 /etc/passwd | cut -d ':' -f3`;
+my $size = `wc -l /etc/passwd | cut --bytes=1-2`;
 my @columnnames=('Nazwa','UID','Edytuj','Usuń');
 my $table = $frame->Table(-columns => 4,
                                 -rows => $size,
@@ -88,13 +79,13 @@ foreach my $col (0 .. @columnnames)
 
 for(my $i=1;$i<$size;$i++)
 {
-	my $tmp_label = $table->Label(-text => $passwd[$i][0],
+	my $tmp_label = $table->Label(-text => $usernames[$i],
                                   -padx => 2,
                                   -anchor => 'w',
                                   -background => 'white',
                                   -relief => "groove");
   $table->put($i, 1, $tmp_label);
-	$tmp_label = $table->Label(-text => $passwd[$i][1],
+	$tmp_label = $table->Label(-text => $uids[$i],
 					-padx => 2,
 					-anchor => 'w',
 					-background => 'white',
@@ -109,7 +100,7 @@ for(my $i=1;$i<$size;$i++)
 	$table->put($i,3,$button_edit);
 	my $button_del = $table->Button(-text => "Usuń",
 						-width => 8,
-						-command => sub{executeDeleteUser($passwd[$tempi][0]);}
+						-command => sub{executeDeleteUser($usernames[$tempi]);}
 						);
 	$table->put($i,4,$button_del);
 }
