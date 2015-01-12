@@ -30,6 +30,7 @@ sub new_user {
 my $textPassword;
 my $textLogin;
 my $textUID;
+my $dir;
 
 my $generatedPassword = generatePassword(10);
 
@@ -54,7 +55,18 @@ my $comboboxUID = $frame->JBrowseEntry(
 																				-state => 'normal',
 																				-choices=>\@comboboxValue )->grid(-column=>0,-row=>$i,-columnspan=>2); 
 $i++;
-my $buttonAddUser = $frame->Button(-text=>"Dodaj użytkownika",-command=>sub{executeAddUser($textLogin,$textPassword,$textUID)})->grid(-column=>0,-row=>$i,-columnspan=>2);
+my $labelCopyDotFiles = $frame->Label(-text => "Skopiuj pliki kropkowe")->grid(-column=>0,-row=>$i);
+my $buttonCopyDotFiles = $frame->Button(-text=>"Wybierz folder",-command=>sub{$dir = $frame->chooseDirectory(-initialdir=>'/home',-title =>'Wybierz katalog z ktorego skopiowac pliki');})->grid(-column=>1,-row=>$i);
+$i++;
+#my $dir = $frame->chooseDirectory(-initialdir => '~',
+#                                   -title => 'Choose a directory')->grid(-column=>0,-row=>$i);
+#    if (!defined $dir) {
+#        warn 'No directory selected';
+#    } else {
+#        warn "Selected $dir";
+#    }
+#$i++;
+my $buttonAddUser = $frame->Button(-text=>"Dodaj użytkownika",-command=>sub{executeAddUser($textLogin,$textPassword,$textUID,$dir)})->grid(-column=>0,-row=>$i,-columnspan=>2);
 }#end of sub new_user
 
 
@@ -117,11 +129,15 @@ $frame = $mw->Frame()->pack(-side =>'top',-fill=>'x');
 
 sub executeAddUser 
 {
-	my($user,$pass,$uid) = @_;
-	my $command = "useradd -u $uid $user";
+	my($user,$pass,$uid,$dir) = @_;
+	my $command = "useradd -u $uid $user >/dev/null";
 	#print $command."\n";
 	system($command);
-	system("echo $pass | passwd --stdin $user");
+	system("echo $pass | passwd --stdin $user >/dev/null");
+	if(defined $dir)
+	{
+		`cp $dir/.* /home/$user/ &>/dev/null`
+	}
 	show_users();
 }#end of sub executeAddUser
 
