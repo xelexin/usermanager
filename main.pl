@@ -31,6 +31,7 @@ my $textPassword;
 my $textLogin;
 my $textUID;
 my $dir;
+my $save;
 
 my $generatedPassword = generatePassword(10);
 
@@ -58,14 +59,9 @@ $i++;
 my $labelCopyDotFiles = $frame->Label(-text => "Skopiuj pliki kropkowe")->grid(-column=>0,-row=>$i);
 my $buttonCopyDotFiles = $frame->Button(-text=>"Wybierz folder",-command=>sub{$dir = $frame->chooseDirectory(-initialdir=>'/home',-title =>'Wybierz katalog z ktorego skopiowac pliki');})->grid(-column=>1,-row=>$i);
 $i++;
-#my $dir = $frame->chooseDirectory(-initialdir => '~',
-#                                   -title => 'Choose a directory')->grid(-column=>0,-row=>$i);
-#    if (!defined $dir) {
-#        warn 'No directory selected';
-#    } else {
-#        warn "Selected $dir";
-#    }
-#$i++;
+my $types = [['Plik konfiguracji','.conf']];
+my $buttonSave = $frame->Button(-text=>'Zapisz konfiguracje',-command=>sub{$save = $frame->getSaveFile(-filetypes=>$types,-defaultextension =>'.conf'); executeSaveFile($textLogin,$textPassword,$textUID,$dir,$save)})->grid(-column=>0,-row=>$i,-columnspan=>2);
+$i++;
 my $buttonAddUser = $frame->Button(-text=>"Dodaj użytkownika",-command=>sub{executeAddUser($textLogin,$textPassword,$textUID,$dir)})->grid(-column=>0,-row=>$i,-columnspan=>2);
 }#end of sub new_user
 
@@ -140,6 +136,18 @@ sub executeAddUser
 	}
 	show_users();
 }#end of sub executeAddUser
+
+sub executeSaveFile
+{
+	my($user,$pass,$uid,$dir,$file) = @_;
+	`echo User: $user >>$file`;
+	`echo Passowrd: $pass >>$file`;
+	`echo UID: $uid >>$file`;
+  `echo Shell: /bin/bash >>$file`;
+	`echo Home Directory: /home/$user >>$file`;
+	`sudo chown root:root $file`;
+  `sudo chmod 400 $file`;
+}#end of sub executeSaveFile
 
 sub executeDeleteUser
 {
