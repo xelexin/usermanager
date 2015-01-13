@@ -55,6 +55,7 @@ my $comboboxUID = $frame->JBrowseEntry(
 																				-variable => \$textUID,
 																				-state => 'normal',
 																				-choices=>\@comboboxValue )->grid(-column=>0,-row=>$i,-columnspan=>2); 
+$comboboxUID->activate(0);
 $i++;
 my $labelCopyDotFiles = $frame->Label(-text => "Skopiuj pliki kropkowe")->grid(-column=>0,-row=>$i);
 my $buttonCopyDotFiles = $frame->Button(-text=>"Wybierz folder",-command=>sub{$dir = $frame->chooseDirectory(-initialdir=>'/home',-title =>'Wybierz katalog z ktorego skopiowac pliki');})->grid(-column=>1,-row=>$i);
@@ -114,18 +115,49 @@ for(my $i=1;$i<$size;$i++)
 }
 $table->pack();
 }#end of sub show_users
+
+
+
 sub edit{
 my $id = $_[0];
 
+my $textPassword;
+my $textLogin=$usernames[$id];
+my $textUID=$uids[$id];
+my $dir;
+my $save;
+
+my $generatedPassword = generatePassword(10);
+
 $frame->destroy();
 $frame = $mw->Frame()->pack(-side =>'top',-fill=>'x');
-
-#print "$passwd[$id][0]\n";
+my $i=0; #row index
+my $labelInputLogin = $frame->Label(-text => "Login")->grid(-column=>0,-row=>$i);
+my $inputLogin = $frame->Entry(-width => 20,-background=>'white',-textvariable=>\$textLogin)->grid(-column=>1,-row=>$i);
+$i++;
+my $labelInputPassword = $frame->Label(-text => "Hasło")->grid(-column=>0,-row=>$i);
+my $inputPassword = $frame->Entry(-width=>20,-background=>'white',-show=>"*",-textvariable=> \$textPassword)->grid(-column=>1,-row=>$i);
+$i++;
+my $labelGeneratedPasswordLabel = $frame->Label(-text => "Wygenerowane losowe hasło")->grid(-column=>0,-row=>$i);
+my $labelGeneratedPassword = $frame->Label(-textvariable=>\$generatedPassword)->grid(-column=>1,-row=>$i);
+$i++;
+my $buttonGeneratePassword = $frame->Button(-text=>"Użyj hasła",-command=>sub{ $textPassword=$generatedPassword; })->grid(-column=>0,-row=>$i,-columnspan=>2);
+$i++;
+my $labelUIDlabel = $frame->Label(-text=> "UID $textUID")->grid(-column=>0,-row=>$i,-columnspan=>2);
+$i++;
+my $labelCopyHomeDir = $frame->Label(-text => "Przenies folder domowy")->grid(-column=>0,-row=>$i);
+my $inputCopyHomeDir = $frame->Entry(-width=>20,-background=>'white',-textvariable=>\$dir)->grid(-column=>1,-row=>$i);
+$i++;
+my $buttonEditUser = $frame->Button(-text=>"Zapisz zmiany",-command=>sub{executeEditUser($id,$textLogin,$textPassword,$dir);})->grid(-column=>0,-row=>$i,-columnspan=>2);
 }#end of sub edit
 
 sub executeAddUser 
 {
 	my($user,$pass,$uid,$dir) = @_;
+	if(!defined $user || !defined $pass)
+	{
+		return;
+	}
 	my $command = "useradd -u $uid $user >/dev/null";
 	#print $command."\n";
 	system($command);
@@ -136,6 +168,30 @@ sub executeAddUser
 	}
 	show_users();
 }#end of sub executeAddUser
+
+sub executeEditUser
+{
+  my($id,$user,$pass,$dir) = @_;
+	#print $usernames[$id];
+	#print $user;
+	if($user ne $usernames[$id])
+	{
+		my $old = $usernames[$id];
+		
+		system("usermod -l $user $old  &>/dev/null");
+		$usernames[$id]=$user;
+	}
+	if(defined $pass)
+	{
+		system("echo $pass | passwd --stdin $usernames[$id] &>/dev/null");
+	}
+	if(defined $dir)
+	{
+		my $old = $usernames[$id];
+		system("usermod -m -d $dir $old");
+	}
+	show_users();
+}#end of sub executeEditUser
 
 sub executeSaveFile
 {
