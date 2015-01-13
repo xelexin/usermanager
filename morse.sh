@@ -4,6 +4,29 @@ declare -A mors
 mors[a]=.-
 mors[b]=-...
 mors[c]=-.-.
+mors[d]=-..
+mors[e]=.
+mors[f]=..-.
+mors[g]=--.
+mors[h]=....
+mors[i]=..
+mors[j]=.---
+mors[k]=-.-
+mors[l]=.-..
+mors[m]=--
+mors[n]=-.
+mors[o]=---
+mors[p]=.--.
+mors[q]=--.-
+mors[r]=.-.
+mors[s]=...
+mors[t]=-
+mors[u]=..-
+mors[v]=...-
+mors[w]=.--
+mors[x]=-..-
+mors[y]=-.--
+mors[z]=--..
 
 wejscie="${1,,}"
 
@@ -20,5 +43,12 @@ do
 dol=$dol" "
 done
 done
-echo $gora
-echo "${dol}"
+wielkosclinii=`tput cols`
+temp=0
+warstopu=$(($((${#gora}/$wielkosclinii))+1))
+for(( i=0;i<$warstopu;i++ ));
+do
+	startarg=$(($i * `tput cols`))
+	echo "${gora:$startarg:`tput cols`}"
+	echo "${dol:$startarg:`tput cols`}"
+done
